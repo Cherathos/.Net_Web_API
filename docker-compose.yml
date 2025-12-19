@@ -1,0 +1,29 @@
+services:
+  api:
+    build: .
+    container_name: furniture_api
+    ports:
+      - "7278:7278"
+    depends_on:
+      - postgres
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
+      ConnectionStrings__DefaultConnection: Host=postgres;Port=5432;Database=furnituredb;Username=postgres;Password=postgres
+      Jwt__Key: THIS_IS_A_VERY_LONG_AND_SECURE_SECRET_KEY_AT_LEAST_64_CHARACTERS_123456
+      Jwt__Issuer: FurnitureApi
+      Jwt__Audience: FurnitureApiUsers
+
+  postgres:
+    image: postgres:16
+    container_name: furniture_postgres
+    environment:
+      POSTGRES_DB: furnituredb
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+volumes:
+  postgres_data:
