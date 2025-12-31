@@ -10,4 +10,5 @@ public sealed class ApplicationDbContext : IdentityDbContext<IdentityUser, Ident
     {
     }
     public DbSet<Furniture> Furnitures { get; set; }
+    public DbSet<RefreshToken> RefreshTokens { get; set; } = null!;
 }

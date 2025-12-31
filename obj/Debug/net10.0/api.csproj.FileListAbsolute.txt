@@ -382,3 +382,4 @@ D:\Projelerim\Pump_It_Up_Projects\C# WEB API\obj\Debug\net10.0\refint\api.dll
 D:\Projelerim\Pump_It_Up_Projects\C# WEB API\obj\Debug\net10.0\api.pdb
 D:\Projelerim\Pump_It_Up_Projects\C# WEB API\obj\Debug\net10.0\api.genruntimeconfig.cache
 D:\Projelerim\Pump_It_Up_Projects\C# WEB API\obj\Debug\net10.0\ref\api.dll
+D:\Projelerim\Pump_It_Up_Projects\C# WEB API\obj\Debug\net10.0\api.sourcelink.json

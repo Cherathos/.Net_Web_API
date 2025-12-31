@@ -12,85 +12,127 @@ using System.Text;
 [ApiController]
 public class AccountController : ControllerBase
 {
-    private readonly UserManager<IdentityUser> _userManager;
+    private readonly UserManager<UserInfo> _userManager;
     private readonly RoleManager<IdentityRole> _roleManager;
+    private readonly ApplicationDbContext _context;
     private readonly IConfiguration _configuration;
+    private readonly ITokenService _tokenService;
 
-    public AccountController(UserManager<IdentityUser> userManager, RoleManager<IdentityRole> roleManager, IConfiguration configuration)
+    public AccountController(UserManager<UserInfo> userManager, 
+    RoleManager<IdentityRole> roleManager, 
+    IConfiguration configuration, 
+    ITokenService tokenService, 
+    ApplicationDbContext context)
     {
         _userManager = userManager;
         _roleManager = roleManager;
+        _tokenService = tokenService;
         _configuration = configuration;
+        _context = context;
     }
 
     [HttpPost("register")]
     [AllowAnonymous]
-    public async Task<IActionResult> UserInfo([FromBody] UserInfo model)
+    public async Task<IActionResult> Register([FromBody] RegisterRequestDto model)
     {
-        var user = new IdentityUser { UserName = model.Username, Email = model.Email };
+        var userExists = await _userManager.FindByNameAsync(model.Username);
+        if (userExists != null)
+            return BadRequest("User already exists");
+
+        var emailExists = await _userManager.FindByEmailAsync(model.Email);
+        if (emailExists != null)
+            return BadRequest("Email already in use");
+
+        var user = new UserInfo
+        {
+            UserName = model.Username,
+            Email = model.Email,
+            PhoneNumber = model.PhoneNumber,
+            FirstName = model.FirstName,
+            LastName = model.LastName
+        };
+
         var result = await _userManager.CreateAsync(user, model.Password);
 
-        if (result.Succeeded)
-        {
-            return Ok(new { message = "User registered successfully" });
-        }
+        if (!result.Succeeded)
+            return BadRequest(result.Errors);
 
-        return BadRequest(result.Errors);
+        return Ok(new { message = "User registered successfully" });
     }
 
     [HttpPost("login")]
     [AllowAnonymous]
-    public async Task<IActionResult> Login([FromBody] LoginRequestDto model, [FromServices] UserManager<IdentityUser> userManager)
+    public async Task<IActionResult> Login(
+        [FromBody] LoginRequestDto model,
+        [FromServices] UserManager<UserInfo> userManager,
+        [FromServices] SignInManager<UserInfo> signInManager,
+        [FromServices] ApplicationDbContext context)
     {
         var user = await userManager.FindByNameAsync(model.Username);
         if (user == null)
-            return Unauthorized("User not found");
+            return Unauthorized("Invalid credentials");
 
-        var tokenHandler = new JwtSecurityTokenHandler();
+        var passwordValid = await userManager.CheckPasswordAsync(user, model.Password);
+        if (!passwordValid)
+            return Unauthorized("Invalid credentials");
 
-        var key = Encoding.UTF8.GetBytes(
-            _configuration["Jwt:Key"] 
-            ?? throw new InvalidOperationException("Jwt:Key missing")
-        );
-        
-        var roles = await userManager.GetRolesAsync(user);
-        var claims = new List<Claim>
+        var jwt = await _tokenService.GenerateJwtTokenAsync(user);
+
+        var refreshToken = new RefreshToken
         {
-            new Claim(JwtRegisteredClaimNames.Sub, model.Username),
-            new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString())
+            Token = Guid.NewGuid().ToString(),
+            UserId = user.Id,
+            Expires = DateTime.UtcNow.AddDays(7),
+            IsRevoked = false
         };
 
-        foreach(var role in roles)
-        {
-            claims.Add(new Claim(ClaimTypes.Role, role));
-        }
-
-        var now = DateTime.UtcNow;
-
-        var tokenDescriptor = new SecurityTokenDescriptor
-        {
-            Subject = new ClaimsIdentity(claims),
-            Issuer = _configuration["Jwt:Issuer"],
-            Audience = _configuration["Jwt:Audience"],
-            NotBefore = now,
-            IssuedAt = now,
-            Expires = now.AddHours(1),
-            SigningCredentials = new SigningCredentials(
-                new SymmetricSecurityKey(key),
-                SecurityAlgorithms.HmacSha512
-            )
-        };
-
-        var token = tokenHandler.CreateToken(tokenDescriptor);
-        var jwt = tokenHandler.WriteToken(token);
+        context.RefreshTokens.Add(refreshToken);
+        await context.SaveChangesAsync();
 
         return Ok(new
         {
-            token = jwt,
-            roles
+            accessToken = jwt,
+            refreshToken = refreshToken.Token
         });
     }
 
+    [HttpPost("refresh-token")]
+    [AllowAnonymous]
+    public async Task<IActionResult> RefreshToken(
+        [FromBody] RefreshTokenRequestDto model)
+    {
+        var storedToken = await _context.RefreshTokens
+            .Include(x => x.User)
+            .FirstOrDefaultAsync(x => x.Token == model.RefreshToken);
+
+        if (storedToken == null ||
+            storedToken.IsRevoked ||
+            storedToken.Expires < DateTime.UtcNow)
+        {
+            return Unauthorized("Invalid refresh token");
+        }
+
+        storedToken.IsRevoked = true;
+
+        var newRefreshToken = new RefreshToken
+        {
+            Token = Guid.NewGuid().ToString(),
+            UserId = storedToken.UserId,
+            Expires = DateTime.UtcNow.AddDays(7),
+            IsRevoked = false
+        };
+
+        _context.RefreshTokens.Add(newRefreshToken);
+        await _context.SaveChangesAsync();
+
+        var newJwt = await _tokenService.GenerateJwtTokenAsync(storedToken.User);
+
+        return Ok(new
+        {
+            accessToken = newJwt,
+            refreshToken = newRefreshToken.Token
+        });
+    }
 
     [HttpPost("add-role")]
     [Authorize(Roles = "Admin")]
@@ -110,22 +152,26 @@ public class AccountController : ControllerBase
         return BadRequest("Role already exists");
     }
 
-    [HttpPost("assign-role")]
+   [HttpPost("assign-role")]
     [Authorize(Roles = "Admin")]
-    public async Task<IActionResult> AssignRole([FromBody] UserRole model)
+    public async Task<IActionResult> AssignRole([FromBody] AssignRoleRequestDto model)
     {
         var user = await _userManager.FindByNameAsync(model.Username);
         if (user == null)
-        {
             return BadRequest("User not found");
-        }
+
+        if (!await _roleManager.RoleExistsAsync(model.Role))
+            return BadRequest("Role does not exist");
+
+        if (await _userManager.IsInRoleAsync(user, model.Role))
+            return BadRequest("User already has this role");
 
         var result = await _userManager.AddToRoleAsync(user, model.Role);
-        if (result.Succeeded)
-        {
-            return Ok(new { message = "Role assigned successfully" });
-        }
 
-        return BadRequest(result.Errors);
+        if (!result.Succeeded)
+            return BadRequest(result.Errors);
+
+        return Ok(new { message = "Role assigned successfully" });
     }
+
 }
