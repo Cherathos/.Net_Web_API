@@ -97,7 +97,7 @@ public class AccountController : ControllerBase
     }
 
     [HttpPost("refresh-token")]
-    [AllowAnonymous]
+    [Authorize]
     public async Task<IActionResult> RefreshToken(
         [FromBody] RefreshTokenRequestDto model)
     {
@@ -152,7 +152,7 @@ public class AccountController : ControllerBase
         return BadRequest("Role already exists");
     }
 
-   [HttpPost("assign-role")]
+    [HttpPost("assign-role")]
     [Authorize(Roles = "Admin")]
     public async Task<IActionResult> AssignRole([FromBody] AssignRoleRequestDto model)
     {
@@ -174,4 +174,21 @@ public class AccountController : ControllerBase
         return Ok(new { message = "Role assigned successfully" });
     }
 
+    [HttpPost("logout")]
+    [AllowAnonymous]
+    public async Task<IActionResult> Logout(
+        [FromBody] RefreshTokenRequestDto model,
+        [FromServices] ApplicationDbContext context)
+    {
+        var token = await context.RefreshTokens
+            .FirstOrDefaultAsync(x => x.Token == model.RefreshToken);
+
+        if (token == null)
+            return Ok();
+
+        token.IsRevoked = true;
+        await context.SaveChangesAsync();
+
+        return Ok(new { message = "Logged out successfully" });
+    }
 }

@@ -6,20 +6,20 @@ using System.Text;
 
 public interface ITokenService
 {
-    Task<string> GenerateJwtTokenAsync(IdentityUser user);
+    Task<string> GenerateJwtTokenAsync(UserInfo user);
 }
 public class TokenService : ITokenService
 {
     private readonly IConfiguration _configuration;
-    private readonly UserManager<IdentityUser> _userManager;
+    private readonly UserManager<UserInfo> _userManager;
 
-    public TokenService(IConfiguration configuration, UserManager<IdentityUser> userManager)
+    public TokenService(IConfiguration configuration, UserManager<UserInfo> userManager)
     {
         _configuration = configuration;
         _userManager = userManager;
     }
 
-    public async Task<string> GenerateJwtTokenAsync(IdentityUser user)
+    public async Task<string> GenerateJwtTokenAsync(UserInfo user)
     {
         var authClaims = new List<Claim>
         {
