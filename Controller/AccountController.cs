@@ -1,12 +1,9 @@
-using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using System.IdentityModel.Tokens.Jwt;
-using System.Security.Claims;
-using Microsoft.IdentityModel.Tokens;
-using System.Text;
+using Microsoft.AspNetCore.RateLimiting;
+
 
 [Route("api/[controller]")]
 [ApiController]
@@ -17,22 +14,26 @@ public class AccountController : ControllerBase
     private readonly ApplicationDbContext _context;
     private readonly IConfiguration _configuration;
     private readonly ITokenService _tokenService;
-
+    private readonly ILogger<AccountController> _logger;
+    
     public AccountController(UserManager<UserInfo> userManager, 
     RoleManager<IdentityRole> roleManager, 
     IConfiguration configuration, 
     ITokenService tokenService, 
-    ApplicationDbContext context)
+    ApplicationDbContext context,
+    ILogger<AccountController> logger)
     {
         _userManager = userManager;
         _roleManager = roleManager;
         _tokenService = tokenService;
         _configuration = configuration;
+        _logger = logger;
         _context = context;
     }
 
     [HttpPost("register")]
     [AllowAnonymous]
+    [EnableRateLimiting("login")]
     public async Task<IActionResult> Register([FromBody] RegisterRequestDto model)
     {
         var userExists = await _userManager.FindByNameAsync(model.Username);
@@ -62,6 +63,7 @@ public class AccountController : ControllerBase
 
     [HttpPost("login")]
     [AllowAnonymous]
+    [EnableRateLimiting("login")]
     public async Task<IActionResult> Login(
         [FromBody] LoginRequestDto model,
         [FromServices] UserManager<UserInfo> userManager,
@@ -70,11 +72,17 @@ public class AccountController : ControllerBase
     {
         var user = await userManager.FindByNameAsync(model.Username);
         if (user == null)
+        {
+            _logger.LogWarning("Login attempt failed for non-existent user: {Username}", model.Username);
             return Unauthorized("Invalid credentials");
-
+        }
+           
         var passwordValid = await userManager.CheckPasswordAsync(user, model.Password);
         if (!passwordValid)
+        {
+            _logger.LogWarning("Invalid password attempt for user: {Username}", model.Username);
             return Unauthorized("Invalid credentials");
+        }
 
         var jwt = await _tokenService.GenerateJwtTokenAsync(user);
 
@@ -86,7 +94,10 @@ public class AccountController : ControllerBase
             IsRevoked = false
         };
 
+        _logger.LogInformation("User {Username} logged in successfully", model.Username);
+
         context.RefreshTokens.Add(refreshToken);
+        
         await context.SaveChangesAsync();
 
         return Ok(new
@@ -98,6 +109,7 @@ public class AccountController : ControllerBase
 
     [HttpPost("refresh-token")]
     [Authorize]
+    [EnableRateLimiting("refresh")]
     public async Task<IActionResult> RefreshToken(
         [FromBody] RefreshTokenRequestDto model)
     {
@@ -127,6 +139,8 @@ public class AccountController : ControllerBase
 
         var newJwt = await _tokenService.GenerateJwtTokenAsync(storedToken.User);
 
+        _logger.LogInformation("Refresh token used for user {Username}", storedToken.User.UserName);
+
         return Ok(new
         {
             accessToken = newJwt,
@@ -143,6 +157,8 @@ public class AccountController : ControllerBase
             var result = await _roleManager.CreateAsync(new IdentityRole(role));
             if (result.Succeeded)
             {
+                _logger.LogInformation("Role {Role} created successfully", role);
+
                 return Ok(new { message = "Role added successfully" });
             }
 
@@ -171,6 +187,8 @@ public class AccountController : ControllerBase
         if (!result.Succeeded)
             return BadRequest(result.Errors);
 
+        _logger.LogInformation("Role {Role} assigned to user {Username}", model.Role, model.Username);
+
         return Ok(new { message = "Role assigned successfully" });
     }
 
@@ -188,6 +206,8 @@ public class AccountController : ControllerBase
 
         token.IsRevoked = true;
         await context.SaveChangesAsync();
+
+        _logger.LogInformation("Refresh token revoked for user ID {UserId}", token.UserId);
 
         return Ok(new { message = "Logged out successfully" });
     }

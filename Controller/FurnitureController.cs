@@ -8,10 +8,13 @@ using Microsoft.EntityFrameworkCore;
 public class FurnitureController : ControllerBase
 {
     private readonly ApplicationDbContext _context;
+    private readonly ILogger<FurnitureController> _logger;
 
-    public FurnitureController(ApplicationDbContext context)
+    public FurnitureController(ApplicationDbContext context,
+    ILogger<FurnitureController> logger)
     {
         _context = context;
+        _logger = logger;
     }
 
     [HttpGet]
@@ -44,8 +47,10 @@ public class FurnitureController : ControllerBase
     [Authorize(Roles = "Admin")]
     public async Task<IActionResult> AddFurniture(addFurnitureDTO addFurnitureDTO)
     {
-        if(!ModelState.IsValid)
+        if(!ModelState.IsValid){
+            _logger.LogInformation("Invalid model state for AddFurniture request");
             return BadRequest(ModelState);
+        }
         var furniture = new Furniture()
         {
             Name = addFurnitureDTO.Name,
@@ -54,6 +59,7 @@ public class FurnitureController : ControllerBase
         };
         _context.Furnitures.Add(furniture);
         await _context.SaveChangesAsync();
+        _logger.LogInformation("New furniture added: {FurnitureName}", furniture.Name);
         return Ok(furniture);
     }
 
@@ -72,6 +78,7 @@ public class FurnitureController : ControllerBase
 
         _context.Furnitures.Remove(existingFurniture);
         await _context.SaveChangesAsync();
+        _logger.LogWarning("Furniture deleted: {FurnitureName}", existingFurniture.Name);
         return Ok(existingFurniture);
     }
 
@@ -91,8 +98,8 @@ public class FurnitureController : ControllerBase
         existingFurniture.Name = furniture.Name;
         existingFurniture.Price = furniture.Price;
         existingFurniture.Description = furniture.Description;
-
         await _context.SaveChangesAsync();
+        _logger.LogInformation("Furniture edited: {FurnitureName}", existingFurniture.Name);
         return Ok(existingFurniture);
     }
 }
