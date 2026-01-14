@@ -93,6 +93,10 @@
             "Swashbuckle.AspNetCore": {
               "target": "Package",
               "version": "[10.1.0, )"
+            },
+            "xunit": {
+              "target": "Package",
+              "version": "[2.9.3, )"
             }
           },
           "imports": [

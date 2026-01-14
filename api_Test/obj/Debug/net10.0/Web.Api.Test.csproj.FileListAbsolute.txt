@@ -1,0 +1,9 @@
+D:\Projelerim\Pump_It_Up_Projects\C# WEB API\Web_Api_Test\bin\Debug\net10.0\.msCoverageSourceRootsMapping_Web.Api.Test
+D:\Projelerim\Pump_It_Up_Projects\C# WEB API\Web_Api_Test\bin\Debug\net10.0\CoverletSourceRootsMapping_Web.Api.Test
+D:\Projelerim\Pump_It_Up_Projects\C# WEB API\Web_Api_Test\obj\Debug\net10.0\Web.Api.Test.csproj.AssemblyReference.cache
+D:\Projelerim\Pump_It_Up_Projects\C# WEB API\Web_Api_Test\obj\Debug\net10.0\MvcTestingAppManifest.json
+D:\Projelerim\Pump_It_Up_Projects\C# WEB API\Web_Api_Test\obj\Debug\net10.0\Web.Api.Test.GeneratedMSBuildEditorConfig.editorconfig
+D:\Projelerim\Pump_It_Up_Projects\C# WEB API\Web_Api_Test\obj\Debug\net10.0\Web.Api.Test.AssemblyInfoInputs.cache
+D:\Projelerim\Pump_It_Up_Projects\C# WEB API\Web_Api_Test\obj\Debug\net10.0\Web.Api.Test.AssemblyInfo.cs
+D:\Projelerim\Pump_It_Up_Projects\C# WEB API\Web_Api_Test\obj\Debug\net10.0\Web.Api.Test.csproj.CoreCompileInputs.cache
+D:\Projelerim\Pump_It_Up_Projects\C# WEB API\Web_Api_Test\obj\Debug\net10.0\Web.Api.Test.sourcelink.json

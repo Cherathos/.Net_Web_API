@@ -384,8 +384,6 @@ D:\Projelerim\Pump_It_Up_Projects\C# WEB API\obj\Debug\net10.0\api.genruntimecon
 D:\Projelerim\Pump_It_Up_Projects\C# WEB API\obj\Debug\net10.0\ref\api.dll
 D:\Projelerim\Pump_It_Up_Projects\C# WEB API\obj\Debug\net10.0\api.sourcelink.json
 D:\Projelerim\Pump_It_Up_Projects\C# WEB API\obj\Debug\net10.0\MvcTestingAppManifest.json
-D:\Projelerim\Pump_It_Up_Projects\C# WEB API\bin\Debug\net10.0\Web.Api.Test\obj\project.assets.json
-D:\Projelerim\Pump_It_Up_Projects\C# WEB API\bin\Debug\net10.0\Web.Api.Test\obj\Web.Api.Test.csproj.nuget.dgspec.json
 D:\Projelerim\Pump_It_Up_Projects\C# WEB API\bin\Debug\net10.0\MvcTestingAppManifest.json
 D:\Projelerim\Pump_It_Up_Projects\C# WEB API\bin\Debug\net10.0\refs\Microsoft.AspNetCore.Antiforgery.dll
 D:\Projelerim\Pump_It_Up_Projects\C# WEB API\bin\Debug\net10.0\refs\Microsoft.AspNetCore.Authentication.Abstractions.dll
@@ -705,3 +703,9 @@ D:\Projelerim\Pump_It_Up_Projects\C# WEB API\bin\Debug\net10.0\Serilog.Settings.
 D:\Projelerim\Pump_It_Up_Projects\C# WEB API\bin\Debug\net10.0\Serilog.Sinks.Console.dll
 D:\Projelerim\Pump_It_Up_Projects\C# WEB API\bin\Debug\net10.0\Serilog.Sinks.Debug.dll
 D:\Projelerim\Pump_It_Up_Projects\C# WEB API\bin\Debug\net10.0\Serilog.Sinks.File.dll
+D:\Projelerim\Pump_It_Up_Projects\C# WEB API\bin\Debug\net10.0\Web_Api_Test\obj\project.assets.json
+D:\Projelerim\Pump_It_Up_Projects\C# WEB API\bin\Debug\net10.0\Web_Api_Test\obj\Web.Api.Test.csproj.nuget.dgspec.json
+D:\Projelerim\Pump_It_Up_Projects\C# WEB API\bin\Debug\net10.0\xunit.abstractions.dll
+D:\Projelerim\Pump_It_Up_Projects\C# WEB API\bin\Debug\net10.0\xunit.assert.dll
+D:\Projelerim\Pump_It_Up_Projects\C# WEB API\bin\Debug\net10.0\xunit.core.dll
+D:\Projelerim\Pump_It_Up_Projects\C# WEB API\bin\Debug\net10.0\xunit.execution.dotnet.dll
